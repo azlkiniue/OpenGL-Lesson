@@ -335,7 +335,7 @@ void DrawObject(string path) {
 
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
-	DrawObject("D:\\UserData\\Documents\\Grafika\\test.off");
+	DrawObject("D:\\Nama\\Folder\\Diganti\\Ya\\Gan\\blablabla.off");
 	glutSwapBuffers();
 }
 
