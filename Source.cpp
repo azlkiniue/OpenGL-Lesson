@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-using namespace std;;
+using namespace std;
 
 float sudut = 0.0, sudut2 = 0.0;
 const int MAXSIZE = 1500;
@@ -14,6 +14,7 @@ typedef struct { int x; int y; }Point2D_i;
 typedef struct { float v[4]; } Vector3D_t;
 typedef struct { float m[3][3]; } matrix3D_t;
 typedef struct { int m[3][3]; } matrix3D_i;
+//typedef struct { float x, y, z; }Point3D_t;
 typedef struct { float x, y, z; }Point3D_t;
 typedef struct { float r; float g; float b; } color_t;
 typedef struct {
@@ -29,6 +30,13 @@ typedef struct {
 Point3D_t point[MAXSIZE]; face_t face[MAXSIZE]; color_t color[MAXSIZE];
 Vector3D_t vec[MAXSIZE], vecbuff[MAXSIZE], NormalVector;
 Point2D_t titik2D[MAXSIZE];
+
+void setColor(color_t col) {
+	float r = col.r / 255;
+	float g = col.g / 255;
+	float b = col.b / 255;
+	glColor3f(r, g, b);
+}
 
 matrix3D_t createIdentity() {
 	matrix3D_t rotate;
@@ -149,15 +157,22 @@ void drawPolygon(Point2D_t point[], int n) {
 		glVertex2f(point[i].x, point[i].y);
 	}
 	glEnd();
-	glFlush();
+	//glFlush();
+}
+void colorizePolygon(Point2D_t point[], int n, color_t colour[]) {
+	glBegin(GL_POLYGON);
+	for (int i = 0; i < n; i++)
+	{
+		setColor(colour[i]);
+		glVertex2f(point[i].x, point[i].y);
+	}
+	glEnd();
+	//glFlush();
 }
 
 void timer(int value) {
 	glutPostRedisplay();
 	glutTimerFunc(10, timer, 0);
-}
-void setColor(color_t col) {
-	glColor3f(col.r, col.g, col.b);
 }
 
 void create3DObject(object3D_t object, color_t col) {
@@ -173,10 +188,39 @@ void create3DObject(object3D_t object, color_t col) {
 		glEnd();
 	}
 }
-void create3DObjectVis(object3D_t object, color_t colFore) {
+void create3DObjectVisCol(object3D_t object) {
 	matrix3D_t tilting = rotationX(sudut2) * rotationZ(sudut2);
-	Vector3D_t vec[100], vecbuff[100], NormalVector;
-	Point2D_t titik2D[100];
+	Vector3D_t vec[MAXSIZE], vecbuff[MAXSIZE], NormalVector;
+	Point2D_t titik2D[MAXSIZE];
+	color_t warna[MAXSIZE];
+	float normalzi;
+	for (int i = 0; i<object.numofVertices; i++)
+	{
+		vec[i] = Point2Vector(object.pnt[i]);
+		vec[i] = tilting*vec[i];
+	}
+	for (int i = 0; i<object.numofFaces; i++)
+	{
+		for (int j = 0; j<object.fc[i].numofVertices; j++)
+			vecbuff[j] = vec[object.fc[i].pnt[j]];
+		NormalVector = (vecbuff[1] - vecbuff[0]) ^ (vecbuff[2] - vecbuff[0]);
+		normalzi = NormalVector.v[2];
+		if (normalzi>0.)
+		{
+			//setColor(colFore);
+			for (int j = 0; j < object.fc[i].numofVertices; j++) {
+				titik2D[j] = Vector2Point2D(vec[object.fc[i].pnt[j]]);
+				warna[j] = color[object.fc[i].pnt[j]];
+			}
+			colorizePolygon(titik2D, object.fc[i].numofVertices, warna);
+		}
+	}
+}
+void create3DObjectVis(object3D_t Theobject, color_t colFore) {
+	object3D_t object = Theobject;
+	matrix3D_t tilting = rotationX(sudut2) * rotationY(-sudut2);
+	Vector3D_t vec[MAXSIZE], vecbuff[MAXSIZE], NormalVector;
+	Point2D_t titik2D[MAXSIZE];
 	float normalzi;
 	for (int i = 0; i<object.numofVertices; i++)
 	{
@@ -200,8 +244,8 @@ void create3DObjectVis(object3D_t object, color_t colFore) {
 }
 void create3DObjectInvis(object3D_t object, color_t colBack) {
 	matrix3D_t tilting = rotationX(sudut2) * rotationZ(sudut2);
-	Vector3D_t vec[100], vecbuff[100], NormalVector;
-	Point2D_t titik2D[100];
+	Vector3D_t vec[MAXSIZE], vecbuff[MAXSIZE], NormalVector;
+	Point2D_t titik2D[MAXSIZE];
 	float normalzi;
 	for (int i = 0; i<object.numofVertices; i++)
 	{
@@ -328,7 +372,8 @@ void DrawObject(string path) {
 	color1.r = 1.0;
 	color1.g = 1.0;
 	color1.b = 1.0;
-	create3DObject(obj, color1);
+	//create3DObjectVis(obj, color1);
+	create3DObjectVisCol(obj);
 	sudut++; if (sudut >= 360.0) sudut = 0.0;
 	glFlush();
 }
