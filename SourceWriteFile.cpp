@@ -287,7 +287,7 @@ object3D_t makeObjKerucut() {
 	return obj;
 }
 
-void DrawObject(string path) {
+void DrawObject() {
 	object3D_t obj = makeObjKerucut();
 	matrix3D_t matrix_X = rotationX(sudut);
 	matrix3D_t matrix_Y = rotationY(sudut);
@@ -329,7 +329,7 @@ void writeObjectToFile(string fileName) {
 
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
-	DrawObject("D:\\UserData\\Documents\\Grafika\\limas.off");
+	DrawObject();
 	glutSwapBuffers();
 }
 
