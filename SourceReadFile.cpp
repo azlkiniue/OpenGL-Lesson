@@ -7,15 +7,15 @@
 using namespace std;
 
 float sudut = 0.0, sudut2 = 0.0;
-const int MAXSIZE = 1500;
+const int MAXSIZE = 17500;
 
 typedef struct { float x; float y; }Point2D_t;
 typedef struct { int x; int y; }Point2D_i;
 typedef struct { float v[4]; } Vector3D_t;
 typedef struct { float m[3][3]; } matrix3D_t;
 typedef struct { int m[3][3]; } matrix3D_i;
-//typedef struct { float x, y, z; }Point3D_t;
 typedef struct { float x, y, z; }Point3D_t;
+//typedef struct { float x, y, z, r, g, b; }Point3D_t;
 typedef struct { float r; float g; float b; } color_t;
 typedef struct {
 	int numofVertices;
@@ -23,13 +23,15 @@ typedef struct {
 }face_t;
 typedef struct {
 	int numofVertices;
-	Point3D_t pnt[600];
+	Point3D_t pnt[MAXSIZE];
 	int numofFaces;
-	face_t fc[1200];
+	face_t fc[MAXSIZE];
 }object3D_t;
 Point3D_t point[MAXSIZE]; face_t face[MAXSIZE]; color_t color[MAXSIZE];
 Vector3D_t vec[MAXSIZE], vecbuff[MAXSIZE], NormalVector;
+color_t warna[MAXSIZE];
 Point2D_t titik2D[MAXSIZE];
+object3D_t obj;
 
 void setColor(color_t col) {
 	float r = col.r / 255;
@@ -175,44 +177,42 @@ void timer(int value) {
 	glutTimerFunc(10, timer, 0);
 }
 
-void create3DObject(object3D_t object, color_t col) {
-	for (int i = 0; i<object.numofFaces; i++) {
+void create3DObject(color_t col) {
+	for (int i = 0; i<obj.numofFaces; i++) {
 		setColor(col);
 		glBegin(GL_LINE_STRIP);
-		for (int j = 0; j<object.fc[i].numofVertices; j++) {
-			int p = object.fc[i].pnt[j];
-			float x = object.pnt[p].x;
-			float y = object.pnt[p].y;
+		for (int j = 0; j<obj.fc[i].numofVertices; j++) {
+			int p = obj.fc[i].pnt[j];
+			float x = obj.pnt[p].x;
+			float y = obj.pnt[p].y;
 			glVertex3f(x, y, 0.0);
 		}
 		glEnd();
 	}
 }
-void create3DObjectVisCol(object3D_t object) {
+void create3DObjectVisCol() {
 	matrix3D_t tilting = rotationX(sudut2) * rotationZ(sudut2);
-	Vector3D_t vec[MAXSIZE], vecbuff[MAXSIZE], NormalVector;
-	Point2D_t titik2D[MAXSIZE];
-	color_t warna[MAXSIZE];
+	
 	float normalzi;
-	for (int i = 0; i<object.numofVertices; i++)
+	for (int i = 0; i<obj.numofVertices; i++)
 	{
-		vec[i] = Point2Vector(object.pnt[i]);
+		vec[i] = Point2Vector(obj.pnt[i]);
 		vec[i] = tilting*vec[i];
 	}
-	for (int i = 0; i<object.numofFaces; i++)
+	for (int i = 0; i<obj.numofFaces; i++)
 	{
-		for (int j = 0; j<object.fc[i].numofVertices; j++)
-			vecbuff[j] = vec[object.fc[i].pnt[j]];
+		for (int j = 0; j<obj.fc[i].numofVertices; j++)
+			vecbuff[j] = vec[obj.fc[i].pnt[j]];
 		NormalVector = (vecbuff[1] - vecbuff[0]) ^ (vecbuff[2] - vecbuff[0]);
 		normalzi = NormalVector.v[2];
 		if (normalzi>0.)
 		{
 			//setColor(colFore);
-			for (int j = 0; j < object.fc[i].numofVertices; j++) {
-				titik2D[j] = Vector2Point2D(vec[object.fc[i].pnt[j]]);
-				warna[j] = color[object.fc[i].pnt[j]];
+			for (int j = 0; j < obj.fc[i].numofVertices; j++) {
+				titik2D[j] = Vector2Point2D(vec[obj.fc[i].pnt[j]]);
+				warna[j] = color[obj.fc[i].pnt[j]];
 			}
-			colorizePolygon(titik2D, object.fc[i].numofVertices, warna);
+			colorizePolygon(titik2D, obj.fc[i].numofVertices, warna);
 		}
 	}
 }
@@ -268,7 +268,7 @@ void create3DObjectInvis(object3D_t object, color_t colBack) {
 	}
 }
 
-object3D_t readFileToObject(string filePath) {
+void readFileToObject(string filePath) {
 	ifstream file(filePath);
 	if (!file)
 	{
@@ -308,9 +308,9 @@ object3D_t readFileToObject(string filePath) {
 			point[i] = { temp[0], temp[1], temp[2] };
 			color[i] = { temp[3], temp[4], temp[5] };
 
-			//cout << s << " \n";
-			//cout << endl;
-		}
+			/*cout << s << " \n";
+			cout << endl;*/
+		}//system("pause");
 		for (int i = 0; i < numofFaces; i++)
 		{
 			file.getline(s, 255);
@@ -328,11 +328,13 @@ object3D_t readFileToObject(string filePath) {
 				fctemp.pnt[j] = temp[j + 1];
 			}
 			face[i] = fctemp;
-		}
+			/*cout << s << " \n";
+			cout << endl;*/
+		}//system("pause");
 
 	}
 	//cout << numofFaces << numofVertices << endl;
-	object3D_t obj;
+	//object3D_t obj;
 	obj.numofFaces = numofFaces;
 	for (int i = 0; i < numofFaces; i++)
 	{
@@ -344,11 +346,11 @@ object3D_t readFileToObject(string filePath) {
 		obj.pnt[i] = point[i];
 	}
 	//delete[] face; delete[] point; delete[] color;
-	return obj;
+	//return obj;
 }
 
 void DrawObject(string path) {
-	object3D_t obj = readFileToObject(path);
+	readFileToObject(path);
 	matrix3D_t matrix_X = rotationX(sudut);
 	matrix3D_t matrix_Y = rotationY(sudut);
 	matrix3D_t matrix_Z = rotationZ(sudut);
@@ -361,8 +363,8 @@ void DrawObject(string path) {
 		p.v[1] = obj.pnt[i].y;
 		p.v[2] = obj.pnt[i].z;
 		/*p = (matrix_Y)*(p);*/ p = operator *(matrix_Y, p);
-		/*p = (matrix_X)*(p);*/ p = operator *(matrix_X, p);
-		/*p = (matrix_Z)*(p);*/ p = operator *(matrix_Z, p);
+		/*p = (matrix_X)*(p);*/ //p = operator *(matrix_X, p);
+		/*p = (matrix_Z)*(p);*/ //p = operator *(matrix_Z, p);
 		obj.pnt[i].x = p.v[0];
 		obj.pnt[i].y = p.v[1];
 		obj.pnt[i].z = p.v[2];
@@ -373,14 +375,14 @@ void DrawObject(string path) {
 	color1.g = 1.0;
 	color1.b = 1.0;
 	//create3DObjectVis(obj, color1);
-	create3DObjectVisCol(obj);
+	create3DObjectVisCol();
 	sudut++; if (sudut >= 360.0) sudut = 0.0;
 	glFlush();
 }
 
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
-	DrawObject("D:\\Nama\\Folder\\Diganti\\Ya\\Gan\\blablabla.off");
+	DrawObject("D:\\UserData\\Documents\\Grafika\\off14\\32.off");
 	glutSwapBuffers();
 }
 
@@ -390,7 +392,7 @@ int main(int iArgc, char** cppArgv) {
 	glutInitWindowSize(400, 400);
 	glutInitWindowPosition(200, 200);
 	glutCreateWindow("File Read");
-	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClearColor(1.0, 1.0, 1.0, 0.0);
 	gluOrtho2D(-1, 1, -1, 1);
 	glutDisplayFunc(display);
 	glutTimerFunc(1, timer, 0);
