@@ -322,7 +322,10 @@ void writeObjectToFile(string filePath, object3D_t object) {
 			{
 				myfile << " " << object.fc[i].pnt[j];
 			}
-			myfile << endl;
+			if (i != object.numofFaces - 1)
+			{
+				myfile << endl;
+			}
 		}
 		myfile.close();
 	}
