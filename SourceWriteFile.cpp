@@ -40,6 +40,15 @@ void setColor(color_t col) {
 	glColor3f(r, g, b);
 }
 
+void initColor() {
+	for (int i = 0; i < MAXSIZE; i++)
+	{
+		color[i].r = (float)(rand() % 255);
+		color[i].g = (float)(rand() % 255);
+		color[i].b = (float)(rand() % 255);
+	}
+}
+
 matrix3D_t createIdentity() {
 	matrix3D_t rotate;
 	rotate.m[0][0] = 0.0;
@@ -245,32 +254,32 @@ void create3DObjectVis(object3D_t object, color_t colFore) {
 }
 
 object3D_t makeObjKerucut() {
-	int n = 32; float r = 0.5, h = 0.9;
-	int numofVertices = n + 1; int numofFaces = numofVertices;
+	int n = 32; float r = 0.5, h = 1;
+	int numofVertices = n + 2; //int numofFaces = numofVertices;
 	//Point3D_t point[600];
-	//int numofFaces = n * 2;
+	int numofFaces = n * 2;
 	//face_t face[1200];
 	object3D_t obj;
 	
 	//make points
 	point[0] = { 0,0,h };
-	for (int i = 0; i < numofVertices; i++)
+	for (int i = 0; i < numofVertices-1; i++)
 	{
 		float s = i * 2 * M_PI / n;
 		point[i + 1].x = r * cos(s);
 		point[i + 1].y = r * sin(s);
 		point[i + 1].z = 0;
-	}
+	}	point[numofVertices - 1] = { 0,0,0 };
 
 	//make faces
 	for (int i = 1; i < n; i++)
 	{
 		face[i - 1] = { 3, { 0,i + 1,i } };
 	}	face[n - 1] = { 3, { 0,1,n } };
-	for (int i = 1; i <= n; i++)
+	for (int i = 1; i < n; i++)
 	{
-		face[n].pnt[i - 1] = i;
-	}	face[n].numofVertices = n;
+		face[i + n - 1] = { 3, { numofVertices - 1,i,i + 1 } };
+	}	face[numofFaces - 1] = { 3, { numofVertices - 1,n,1 } };
 
 	//make object
 	obj.numofFaces = numofFaces;
@@ -287,7 +296,40 @@ object3D_t makeObjKerucut() {
 	return obj;
 }
 
-void DrawObject() {
+void writeObjectToFile(string filePath, object3D_t object) {
+	ofstream myfile(filePath);
+	float roundDigit = 1000000;
+	if (myfile.is_open())
+	{
+		myfile << "COFF\n";
+		myfile << object.numofVertices << " "
+			<< object.numofFaces << " "
+			<< 0 << endl;
+		for (int i = 0; i < object.numofVertices; i++)
+		{
+			myfile << roundf(object.pnt[i].x * roundDigit)/roundDigit << " "
+				<< roundf(object.pnt[i].y * roundDigit)/roundDigit << " "
+				<< roundf(object.pnt[i].z * roundDigit)/roundDigit << " ";
+			myfile << color[i].r << " "
+				<< color[i].g << " "
+				<< color[i].b << " ";
+			myfile << 255 << endl;
+		}
+		for (int i = 0; i < object.numofFaces; i++)
+		{
+			myfile << object.fc[i].numofVertices;
+			for (int j = 0; j < object.fc[i].numofVertices; j++)
+			{
+				myfile << " " << object.fc[i].pnt[j];
+			}
+			myfile << endl;
+		}
+		myfile.close();
+	}
+	else cout << "Unable to open file";
+}
+
+void DrawObject(string path) {
 	object3D_t obj = makeObjKerucut();
 	matrix3D_t matrix_X = rotationX(sudut);
 	matrix3D_t matrix_Y = rotationY(sudut);
@@ -309,37 +351,27 @@ void DrawObject() {
 	color1.r = 255;
 	color1.g = 255;
 	color1.b = 255;
-	create3DObjectVis(obj, color1);
-	//create3DObjectVisCol(obj);
+	//create3DObjectVis(obj, color1);
+	create3DObjectVisCol(obj);
 	sudut++; if (sudut >= 360.0) sudut = 0.0;
 	glFlush();
-}
-
-
-void writeObjectToFile(string fileName) {
-	ofstream myfile("example.txt");
-	if (myfile.is_open())
-	{
-		myfile << "This is my first awesome line.\n";
-		myfile << "This is my second awesome line.\n";
-		myfile.close();
-	}
-	else cout << "Unable to open file";
+	writeObjectToFile(path, obj);
 }
 
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
-	DrawObject();
+	DrawObject("D:\\Nama\\Foldernya\\Diganti\\Ya\\Gan\\kerucut.off");
 	glutSwapBuffers();
 }
 
 int main(int iArgc, char** cppArgv) {
+	initColor();
 	glutInit(&iArgc, cppArgv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(400, 400);
 	glutInitWindowPosition(200, 200);
-	glutCreateWindow("File Read");
-	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glutCreateWindow("File Write");
+	glClearColor(1.0, 1.0, 1.0, 0.0);
 	gluOrtho2D(-1, 1, -1, 1);
 	glutDisplayFunc(display);
 	glutTimerFunc(1, timer, 0);
